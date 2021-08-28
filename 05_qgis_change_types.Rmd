@@ -1,0 +1,983 @@
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Library
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+datasepa_data <- read_csv('data_preparation/sepdata_arrivel.csv')
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cycle <- read_csv("data_preparation/stations.csv")
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cluster1 <- read_csv("table/nonscaled/cluster1.csv") %>% 
+  select(., c(1, 2))
+cluster2 <- read_csv("table/nonscaled/cluster2.csv") %>% 
+  select(., c(1, 2))
+cluster3 <- read_csv("table/nonscaled/cluster3.csv") %>% 
+  select(., c(1, 2))
+cluster4 <- read_csv("table/nonscaled/cluster4.csv") %>% 
+  select(., c(1, 2))
+cluster5 <- read_csv("table/nonscaled/cluster5.csv") %>% 
+  select(., c(1, 2))
+cluster6 <- read_csv("table/nonscaled/cluster6.csv") %>% 
+  select(., c(1, 2))
+```
+
+### Function for extracting data for month
+
+```{r}
+countdatafun <- function(cluster, m, y, n1, n2){
+  clusterdf <- cluster %>% 
+    left_join(., datasepa_data,
+              by = c("id" = "end_station_id")) %>% 
+    select(., c(3:9, 1, 2, 11))
+  alldatamonth <- clusterdf %>%
+    filter(month == m) #'03'
+  
+  alldatamonth$day <- as.numeric(alldatamonth$day)
+  monthlast <- alldatamonth %>% 
+    filter(day >= n1) %>% 
+    filter(day <= n2)
+  
+
+  monthlastyear <- monthlast %>%
+    filter(year == y)
+  
+  return(monthlastyear)
+ 
+}
+```
+
+
+### cluster 1
+#### run 2019 data for cluster 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster1, "03", "2019", 25, 29)
+countmay <- countdatafun(cluster1, "05", "2019", 20, 24)
+countaug <- countdatafun(cluster1, "08", "2019", 19, 23)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekdays/1/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekdays/1/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekdays/1/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster1, "03", "2019", 30, 31)
+countmay <- countdatafun(cluster1, "05", "2019", 25, 26)
+countaug <- countdatafun(cluster1, "08", "2019", 24, 25)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekends/1/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekends/1/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekends/1/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster1, "03", "2020", 23, 27)
+countmay <- countdatafun(cluster1, "05", "2020", 25, 29)
+countaug <- countdatafun(cluster1, "08", "2020", 24, 28)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekdays/1/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekdays/1/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekdays/1/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster1, "03", "2020", 28, 29)
+countmay <- countdatafun(cluster1, "05", "2020", 30, 31)
+countaug <- countdatafun(cluster1, "08", "2020", 29, 30)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekends/1/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekends/1/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekends/1/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+#### run 2021 data for cluster 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster1, "03", "2021", 22, 26)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekdays/1/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster1, "03", "2021", 27, 28)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekends/1/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+### cluster 2
+
+#### run 2019 data for cluster 2
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster2, "03", "2019", 25, 29)
+countmay <- countdatafun(cluster2, "05", "2019", 20, 24)
+countaug <- countdatafun(cluster2, "08", "2019", 19, 23)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekdays/2/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekdays/2/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekdays/2/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster2, "03", "2019", 30, 31)
+countmay <- countdatafun(cluster2, "05", "2019", 25, 26)
+countaug <- countdatafun(cluster2, "08", "2019", 24, 25)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekends/2/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekends/2/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekends/2/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 2
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster2, "03", "2020", 23, 27)
+countmay <- countdatafun(cluster2, "05", "2020", 25, 29)
+countaug <- countdatafun(cluster2, "08", "2020", 24, 28)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekdays/2/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekdays/2/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekdays/2/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster2, "03", "2020", 28, 29)
+countmay <- countdatafun(cluster2, "05", "2020", 30, 31)
+countaug <- countdatafun(cluster2, "08", "2020", 29, 30)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekends/2/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekends/2/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekends/2/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+#### run 2021 data for cluster 2
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster2, "03", "2021", 22, 26)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekdays/2/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster2, "03", "2021", 27, 28)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekends/2/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+### cluster 3
+#### run 2019 data for cluster 3
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster3, "03", "2019", 25, 29)
+countmay <- countdatafun(cluster3, "05", "2019", 20, 24)
+countaug <- countdatafun(cluster3, "08", "2019", 19, 23)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekdays/3/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekdays/3/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekdays/3/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster3, "03", "2019", 30, 31)
+countmay <- countdatafun(cluster3, "05", "2019", 25, 26)
+countaug <- countdatafun(cluster3, "08", "2019", 24, 25)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekends/3/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekends/3/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekends/3/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 3
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster3, "03", "2020", 23, 27)
+countmay <- countdatafun(cluster3, "05", "2020", 25, 29)
+countaug <- countdatafun(cluster3, "08", "2020", 24, 28)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekdays/3/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekdays/3/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekdays/3/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster3, "03", "2020", 28, 29)
+countmay <- countdatafun(cluster3, "05", "2020", 30, 31)
+countaug <- countdatafun(cluster3, "08", "2020", 29, 30)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekends/3/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekends/3/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekends/3/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+#### run 2021 data for cluster 3
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster3, "03", "2021", 22, 26)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekdays/3/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster3, "03", "2021", 27, 28)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekends/3/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+### cluster 4
+#### run 2019 data for cluster 4
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster4, "03", "2019", 25, 29)
+countmay <- countdatafun(cluster4, "05", "2019", 20, 24)
+countaug <- countdatafun(cluster4, "08", "2019", 19, 23)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekdays/4/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekdays/4/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekdays/4/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster4, "03", "2019", 30, 31)
+countmay <- countdatafun(cluster4, "05", "2019", 25, 26)
+countaug <- countdatafun(cluster4, "08", "2019", 24, 25)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekends/4/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekends/4/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekends/4/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 4
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster4, "03", "2020", 23, 27)
+countmay <- countdatafun(cluster4, "05", "2020", 25, 29)
+countaug <- countdatafun(cluster4, "08", "2020", 24, 28)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekdays/4/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekdays/4/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekdays/4/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster4, "03", "2020", 28, 29)
+countmay <- countdatafun(cluster4, "05", "2020", 30, 31)
+countaug <- countdatafun(cluster4, "08", "2020", 29, 30)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekends/4/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekends/4/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekends/4/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+#### run 2021 data for cluster 4
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster4, "03", "2021", 22, 26)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekdays/4/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster4, "03", "2021", 27, 28)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekends/4/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+### cluster 5
+#### run 2019 data for cluster 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster5, "03", "2019", 25, 29)
+countmay <- countdatafun(cluster5, "05", "2019", 20, 24)
+countaug <- countdatafun(cluster5, "08", "2019", 19, 23)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekdays/5/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekdays/5/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekdays/5/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster5, "03", "2019", 30, 31)
+countmay <- countdatafun(cluster5, "05", "2019", 25, 26)
+countaug <- countdatafun(cluster5, "08", "2019", 24, 25)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekends/5/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekends/5/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekends/5/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 5
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster5, "03", "2020", 23, 27)
+countmay <- countdatafun(cluster5, "05", "2020", 25, 29)
+countaug <- countdatafun(cluster5, "08", "2020", 24, 28)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekdays/5/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekdays/5/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekdays/5/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster5, "03", "2020", 28, 29)
+countmay <- countdatafun(cluster5, "05", "2020", 30, 31)
+countaug <- countdatafun(cluster5, "08", "2020", 29, 30)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekends/5/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekends/5/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekends/5/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+#### run 2021 data for cluster 5
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster5, "03", "2021", 22, 26)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekdays/5/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster5, "03", "2021", 27, 28)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekends/5/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+### cluster 6
+#### run 2019 data for cluster 6
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster6, "03", "2019", 25, 29)
+countmay <- countdatafun(cluster6, "05", "2019", 20, 24)
+countaug <- countdatafun(cluster6, "08", "2019", 19, 23)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekdays/6/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekdays/6/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekdays/6/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster6, "03", "2019", 30, 31)
+countmay <- countdatafun(cluster6, "05", "2019", 25, 26)
+countaug <- countdatafun(cluster6, "08", "2019", 24, 25)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/weekends/6/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/weekends/6/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/weekends/6/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 6
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster6, "03", "2020", 23, 27)
+countmay <- countdatafun(cluster6, "05", "2020", 25, 29)
+countaug <- countdatafun(cluster6, "08", "2020", 24, 28)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekdays/6/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekdays/6/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekdays/6/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar <- countdatafun(cluster6, "03", "2020", 28, 29)
+countmay <- countdatafun(cluster6, "05", "2020", 30, 31)
+countaug <- countdatafun(cluster6, "08", "2020", 29, 30)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/weekends/6/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- countmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/weekends/6/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- countaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/weekends/6/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+#### run 2021 data for cluster 6
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster6, "03", "2021", 22, 26)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekdays/6/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar <- countdatafun(cluster6, "03", "2021", 27, 28)
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- countmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/weekends/6/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+

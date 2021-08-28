@@ -1,0 +1,496 @@
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Library
+library(tidyverse)
+library(janitor)
+library(sf)
+```
+
+
+## load the necessary datasets
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cycle <- read_csv("data_preparation/stations.csv") %>% 
+  select(., c(1, 2))
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+buffer <- st_read("250buffer/250buffer.shp")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# datasets acquired from QGIS software
+education <- read_csv("dataset_landuse/education.csv") %>% 
+  select(., c(1, 7)) %>% 
+  group_by(id) %>% 
+  summarise(edu = sum(area))
+commerce <- read_csv("dataset_landuse/commerce.csv") %>% 
+  select(., c(1, 7))%>% 
+  group_by(id) %>% 
+  summarise(com = sum(area))
+eating <- read_csv("dataset_landuse/eating.csv") %>% 
+  select(., c(1, 7))%>% 
+  group_by(id) %>% 
+  summarise(eat = sum(area))
+leisure <- read_csv("dataset_landuse/leisure.csv") %>% 
+  select(., c(1, 7))%>% 
+  group_by(id) %>% 
+  summarise(lei = sum(area))
+residence <- read_csv("dataset_landuse/res.csv") %>% 
+  select(., c(1, 7))%>%
+  group_by(id) %>%
+  summarise(res = sum(area))
+office <- read_csv("dataset_landuse/off.csv") %>% 
+  select(., c(1, 7))%>%
+  group_by(id) %>%
+  summarise(off = sum(area))
+```
+
+
+```{r}
+data <- merge(cycle, education, by="id", all = T)
+data <- merge(data, commerce, by="id", all = T)
+data <- merge(data, eating, by="id", all = T)
+data <- merge(data, leisure, by="id", all = T)
+data <- merge(data, residence, by="id", all = T)
+data <- merge(data, office, by="id", all = T)
+data[is.na(data)] <- 0
+```
+
+```{r}
+education <- education %>% 
+  rename("area" = "edu")
+commerce <- commerce %>% 
+  rename("area" = "com")
+eating <- eating %>% 
+  rename("area" = "eat")
+leisure <- leisure %>% 
+  rename("area" = "lei")
+residence <- residence %>% 
+  rename("area" = "res")
+office <- office %>% 
+  rename("area" = "off")
+```
+
+
+```{r}
+datasum <- rbind(education, commerce)
+datasum <- rbind(datasum, eating)
+datasum <- rbind(datasum, leisure)
+datasum <- rbind(datasum, office)
+datasum <- rbind(datasum, residence) %>% 
+  group_by(id) %>% 
+  summarise(area = sum(area))
+```
+
+
+```{r}
+caldata<- merge(data, datasum, by="id", all = T)
+```
+
+
+## calculate the proportions of functional areas for the buffer around each station 
+
+```{r}
+prodata <- caldata %>% 
+  mutate(respro = res/area) %>% 
+  mutate(compro = com/area) %>% 
+  mutate(leipro = lei/area) %>% 
+  mutate(eatpro = eat/area) %>% 
+  mutate(edupro = edu/area) %>% 
+  mutate(offpro = off/area)
+```
+
+```{r}
+# mydata contains the proportions of each functional area
+proportiondata <- prodata %>%
+      dplyr::select(., c(10: 15))
+
+```
+
+
+## check correlation 
+
+```{r}
+library(corrr)
+Correlation_all<- proportiondata %>%
+  correlate()
+Correlation_all
+```
+```{r}
+r <- rplot(Correlation_all, shape = 15,colours = c("blue", "white", "red"))
+r
+```
+
+
+## check variable distributions
+
+```{r}
+#– check variable distributions first
+histplot <- ggplot(data=proportiondata, aes(x=respro))
+histplot +geom_histogram()
+
+```
+
+```{r}
+histplot <- ggplot(data=proportiondata, aes(x= leipro))
+histplot +geom_histogram()
+
+```
+
+```{r}
+histplot <- ggplot(data=proportiondata, aes(x= compro))
+histplot +geom_histogram()
+
+```
+
+```{r}
+histplot <- ggplot(data=proportiondata, aes(x= eatpro))
+histplot +geom_histogram()
+
+```
+
+```{r}
+histplot <- ggplot(data=proportiondata, aes(x= edupro))
+histplot +geom_histogram()
+
+```
+
+```{r}
+histplot <- ggplot(data=proportiondata, aes(x= offpro))
+histplot +geom_histogram()
+
+```
+
+
+## run k-means clustering algorithm
+
+```{r}
+fit <- proportiondata %>%
+  kmeans(., 6, nstart=25)
+```
+
+```{r}
+library(tidymodels)
+buffer_fit <- fit %>% 
+  # .cluster column; LondonWards (sf)
+  augment(., buffer)%>%
+  dplyr::select(id, .cluster)%>%
+  # make sure the .cluster column is numeric
+  mutate(across(.cluster, as.numeric))%>%
+  # join the .cluster to our sf layer
+  left_join(buffer, 
+            .,
+            by = c("id" = "id"))
+
+```
+```{r}
+buffersave <- buffer_fit %>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+write.table(buffersave,"table/allclusters.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+```{r}
+# get cluster means
+library(tidymodels)
+
+centroid1 <- tidy(fit)%>%
+  #print the results of the cluster groupings
+  print()
+```
+
+
+```{r}
+write.table(centroid1,"table/cluster.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+## scaled data
+
+```{r}
+mydatascale <- scale(proportiondata)
+fitscale <- mydatascale %>%
+  kmeans(., 6, nstart=25)
+```
+
+```{r}
+# get cluster means
+centroid2 <- tidy(fitscale)%>%
+  #print the results of the cluster groupings
+  print()
+```
+
+```{r}
+write.table(centroid2,"table/cluster_scale.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+```{r}
+bufferscaleg <- fitscale %>% 
+  # .cluster column; LondonWards (sf)
+  augment(., buffer)%>%
+  dplyr::select(id, .cluster)%>%
+  # make sure the .cluster column is numeric
+  mutate(across(.cluster, as.numeric))%>%
+  # join the .cluster to our sf layer
+  left_join(buffer, 
+            .,
+            by = c("id" = "id"))
+
+```
+
+
+```{r}
+bufferscale <- bufferscaleg
+cluster1 <- bufferscale %>% 
+  filter(.cluster == "1") %>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster2 <- bufferscale %>% 
+  filter(.cluster == "2")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster3 <- bufferscale %>% 
+  filter(.cluster == "3")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster4 <- bufferscale %>% 
+  filter(.cluster == "4")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster5 <- bufferscale %>% 
+  filter(.cluster == "5")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster6 <- bufferscale %>% 
+  filter(.cluster == "6")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+```
+
+```{r}
+write.table(cluster1,"table/scaled/cluster1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster2,"table/scaled/cluster2.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster3,"table/scaled/cluster3.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster4,"table/scaled/cluster4.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster5,"table/scaled/cluster5.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster6,"table/scaled/cluster6.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+
+
+## non-scaled data
+
+
+```{r}
+cluster1 <- buffer_fit %>% 
+  filter(.cluster == "1") %>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster2 <- buffer_fit %>% 
+  filter(.cluster == "2")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster3 <- buffer_fit %>% 
+  filter(.cluster == "3")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster4 <- buffer_fit %>% 
+  filter(.cluster == "4")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster5 <- buffer_fit %>% 
+  filter(.cluster == "5")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+cluster6 <- buffer_fit %>% 
+  filter(.cluster == "6")%>% 
+  st_drop_geometry() %>% 
+  select(., c(1, 2, 3, 4, 6))
+```
+
+```{r}
+write.table(cluster1,"table/nonscaled/cluster1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster2,"table/nonscaled/cluster2.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster3,"table/nonscaled/cluster3.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster4,"table/nonscaled/cluster4.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster5,"table/nonscaled/cluster5.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(cluster6,"table/nonscaled/cluster6.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+
+```{r}
+
+#now map our geodeomographic classification
+map <- ggplot(buffer_fit) + 
+  geom_sf(mapping = aes(fill=.cluster))+
+  scale_fill_continuous(breaks=c(1,2,3,4,5,6))
+map
+```
+
+
+
+### function for decide k
+ 
+
+```{r}
+elbowfun <- function(proportiondata){
+  # create empty list to store the within sum of square values 
+  withinss_values <- list()
+  # execute a k-means clustering for k=1, k=2, ..., k=15
+  for (i in 1:15) {
+    withinss_values[i] <- sum(kmeans(proportiondata,centers=i)$withinss)
+  }
+  
+  # vector to dataframe and transpose
+  withinss_values <- as.data.frame(withinss_values)
+  withinss_values <- as.data.frame(t(withinss_values))
+  # add cluster numbers
+  withinss_values$cluster <- seq.int(nrow(withinss_values))
+  names(withinss_values) <- c('withinss','cluster')
+  # plot
+  graph <- ggplot(data=withinss_values, aes(x=cluster,y=withinss)) +
+    geom_point() +
+    geom_path() + 
+    scale_x_continuous(breaks=seq(1,15)) +
+    xlab('number of clusters') +
+    ylab('within sum of squares')
+  
+  return(list(withinss_values,graph))
+}
+```
+
+```{r}
+elbow <- elbowfun(proportiondata)
+elbow[[1]]
+```
+```{r}
+elbow[[2]]
+```
+
+
+### function for k-means
+
+```{r}
+kmeansfun <- function(proportiondata,columns,number_of_clusters=6,
+                      number_of_runs=10,graph=FALSE) {
+  data <- select(proportiondata,columns)
+  # scale
+  data <- scale(data)
+  # fit, clusters
+  fit <- NA
+  clusters <- list()
+  
+  # run the k-means 10 times to extract clusters
+  for (i in 1:number_of_runs){
+    cluster_run <- kmeans(x=data, 
+                          centers=number_of_clusters, 
+                          iter.max=1000000, nstart=1)
+
+    # get the total within sum of squares for the run and update the results of the clustering if the total within sum of squares for the run is lower or equal to any of the runs that have been executed so far
+    fit[i] <- cluster_run$tot.withinss
+    if (fit[i] <= min(fit[1:(i-1)])){
+      clusters <- cluster_run}
+  }
+  
+  # mean values for each variable in each cluster
+  kfit_mean<- as_tibble(aggregate(data,
+                                  by=list(clusters$cluster),
+                                  FUN=mean))
+  names(kfit_mean)[1] <- 'cluster'
+  # transform shape to tidy format
+  kfit_mean_long <- pivot_longer(kfit_mean, cols=(-cluster))
+  
+  # plot
+  if (graph == TRUE) {
+    graph <- graph_kmeans(kfit_mean_long,number_of_clusters)
+  }
+
+  return(list(kfit_mean_long,graph))
+}
+
+
+graph_kmeans <- function(df,number_of_clusters) {
+  
+  # plot data
+  plt <- ggplot(df, aes(x=cluster, y=value, colour=name)) +
+    geom_line () +
+    scale_x_continuous(breaks=seq(1,number_of_clusters,by=1)) +
+    theme_minimal() +
+    theme(legend.title = element_blank())
+
+  return(plt)
+}
+
+```
+```{r}
+results <- kmeansfun(proportiondata = proportiondata,
+                     columns=c('respro','compro','leipro',
+                               'edupro','eatpro','offpro'),
+                     number_of_runs=10,
+                     graph=TRUE)
+
+# results
+results[[1]]
+results[[2]]
+```
+
+
+```{r}
+non_scalekmeansfun <- function(proportiondata,columns,number_of_clusters=6,
+                      number_of_runs=10,graph=FALSE) {
+  data <- select(proportiondata,columns)
+  # fit, clusters
+  fit <- NA
+  clusters <- list()
+  
+  # run the k-means 10 times to extract clusters
+  for (i in 1:number_of_runs){
+    cluster_run <- kmeans(x=data, 
+                          centers=number_of_clusters, 
+                          iter.max=1000000, nstart=1)
+
+    # get the total within sum of squares for the run and update the results of the clustering if the total within sum of squares for the run is lower or equal to any of the runs that have been executed so far
+    fit[i] <- cluster_run$tot.withinss
+    if (fit[i] <= min(fit[1:(i-1)])){
+      clusters <- cluster_run}
+  }
+  
+  # mean values for each variable in each cluster
+  kfit_mean<- as_tibble(aggregate(data,
+                                  by=list(clusters$cluster),
+                                  FUN=mean))
+  names(kfit_mean)[1] <- 'cluster'
+  # transform shape to tidy format
+  kfit_mean_long <- pivot_longer(kfit_mean, cols=(-cluster))
+  
+  # plot
+  if (graph == TRUE) {
+    graph <- graph_kmeans(kfit_mean_long,number_of_clusters)
+  }
+
+  return(list(kfit_mean_long,graph))
+}
+
+
+graph_kmeans <- function(df,number_of_clusters) {
+  
+  # plot data
+  plt <- ggplot(df, aes(x=cluster, y=value, colour=name)) +
+    geom_line () +
+    scale_x_continuous(breaks=seq(1,number_of_clusters,by=1)) +
+    theme_minimal() +
+    theme(legend.title = element_blank())
+
+  return(plt)
+}
+
+```
+```{r}
+results <- non_scalekmeansfun(proportiondata = proportiondata,
+                              columns=c('respro','compro','leipro',
+                                        'edupro','eatpro','offpro'),
+                              number_of_runs=10,
+                              graph=TRUE)
+
+# results
+results[[1]]
+results[[2]]
+```

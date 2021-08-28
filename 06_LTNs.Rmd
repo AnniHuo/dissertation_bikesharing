@@ -1,0 +1,189 @@
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Library
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+datasepa_data <- read_csv('data_preparation/sepdata_arrivel.csv')
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+ltns <- read_csv('data_preparation/cluster_LTNs.csv') %>% 
+  select(., c(1, 5, 6))
+```
+
+### Function for extracting data for month
+
+```{r}
+countdatafun <- function(m, n1, n2, y){
+  alldatamonth <- datasepa_data %>%
+    filter(month == m) #'03'
+  
+  alldatamonth$day <- as.numeric(alldatamonth$day)
+  monthlast <- alldatamonth %>% 
+    filter(day >= n1) %>% 
+    filter(day <= n2)
+  
+
+  monthlastyear <- monthlast %>%
+    filter(year == y) %>% #'2019' 
+    group_by(end_station_id) %>% 
+    summarise(count = sum(count))
+  
+  return(monthlastyear)
+ 
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countmar2019 <- countdatafun("03", 25, 31, "2019") #786
+countmar2021 <- countdatafun("03", 22, 28, "2021") #791
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+countaug2019 <- countdatafun("08", 19, 25, "2019") #780
+countaug2020 <- countdatafun("08", 24, 30, "2020") #783
+```
+
+```{r}
+mardata <- countmar2019 %>% 
+  left_join(., countmar2021, by = c("end_station_id" = "end_station_id"))
+mardata[is.na(mardata)] <- 0
+mardata <- mardata %>% 
+  mutate(inc = (count.y-count.x)/count.x) 
+```
+```{r}
+augdata <- countaug2019 %>% 
+  left_join(., countaug2020, by = c("end_station_id" = "end_station_id"))
+augdata[is.na(augdata)] <- 0
+augdata <- augdata %>% 
+  mutate(inc = (count.y-count.x)/count.x)
+```
+
+
+```{r}
+mardataltn <- mardata %>%
+  left_join(., ltns, by = c("end_station_id" = "id"))
+
+mardataltn <- na.omit(mardataltn)
+```
+
+```{r}
+augdataltn <- augdata %>%
+  left_join(., ltns, by = c("end_station_id" = "id"))
+
+augdataltn <- na.omit(augdataltn)
+```
+
+```{r}
+mar <- mardataltn %>% 
+  select(., c(5, 6, 4)) %>% 
+  filter(inc < 1.5)
+aug <- augdataltn %>% 
+  select(., c(5, 6, 4))%>% 
+  filter(inc < 1.5)
+```
+
+
+### March 2021 boxplot
+
+```{r}
+
+data <- mar %>% 
+  rename("cluster" = ".cluster", 
+         "treatment" = "id_2",  
+         "note" = "inc")
+ 
+# Reorder varieties (group) (mixing low and high treatments for the calculations)
+new_order <- with(data, reorder(cluster, cluster, mean , na.rm=T))
+ 
+# Then I make the boxplot, asking to use the 2 factors : variety (in the good order) AND treatment :
+par(mar=c(3,4,3,1))
+myplot <- boxplot(note ~ treatment*new_order , data=data  , 
+        boxwex=0.4 , ylab="increase",
+        main="trip count increase of 6 types of stations" , 
+        col=c("slateblue1" , "grey") ,  
+        xaxt="n")
+ 
+# To add the label of x axis
+my_names <- sapply(strsplit(myplot$names , '\\.') , function(x) x[[2]] )
+my_names <- my_names[seq(1 , length(my_names) , 2)]
+axis(1, 
+     at = seq(1.5 , 12 , 2), 
+     labels = my_names , 
+     tick=FALSE , cex=0.3)
+
+# Add the grey vertical lines
+for(i in seq(0.5 , 18 , 2)){ 
+  abline(v=i,lty=1, col="grey")
+  }
+
+```
+```{r}
+data <- mar %>% 
+  rename("cluster" = ".cluster", 
+         "treatment" = "id_2",  
+         "note" = "inc")
+ 
+# Reorder varieties (group) (mixing low and high treatments for the calculations)
+new_order1 <- with(data, reorder(cluster, note, mean, na.rm=T))
+new_order1
+```
+```{r}
+datamean1 <- data %>% 
+  group_by(cluster, treatment) %>% 
+  summarise(mean = mean(note))
+```
+
+
+### August 2020 boxplot
+
+```{r}
+
+data <- aug %>% 
+  rename("cluster" = ".cluster", 
+         "treatment" = "id_2",  
+         "note" = "inc")
+ 
+# Reorder varieties (group) (mixing low and high treatments for the calculations)
+new_order <- with(data, reorder(cluster, cluster, mean , na.rm=T))
+ 
+# Then I make the boxplot, asking to use the 2 factors : variety (in the good order) AND treatment :
+par(mar=c(3,4,3,1))
+myplot <- boxplot(note ~ treatment*new_order , data=data  , 
+        boxwex=0.4 , ylab="increase",
+        main="trip count increase of 6 types of stations" , 
+        col=c("slateblue1" , "grey") ,  
+        xaxt="n")
+ 
+# To add the label of x axis
+my_names <- sapply(strsplit(myplot$names , '\\.') , function(x) x[[2]] )
+my_names <- my_names[seq(1 , length(my_names) , 2)]
+axis(1, 
+     at = seq(1.5 , 12 , 2), 
+     labels = my_names , 
+     tick=FALSE , cex=0.3)
+
+# Add the grey vertical lines
+for(i in seq(0.5 , 18 , 2)){ 
+  abline(v=i,lty=1, col="grey")
+  }
+
+```
+```{r}
+data <- aug %>% 
+  rename("cluster" = ".cluster", 
+         "treatment" = "id_2",  
+         "note" = "inc")
+ 
+# Reorder varieties (group) (mixing low and high treatments for the calculations)
+new_order2 <- with(data, reorder(cluster, note, mean , na.rm=T))
+new_order2
+```
+
+```{r}
+datamean2 <- data %>% 
+  group_by(cluster, treatment) %>% 
+  summarise(mean = mean(note))
+```

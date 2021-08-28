@@ -1,0 +1,38 @@
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Library
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+datasepa_data <- read_csv("data_preparation/sepdata_departure.csv") 
+```
+
+```{r}
+heatmapfun <- function(cycledata){
+  cycledata <- cycledata %>%
+    group_by(date, hour) %>%
+    summarise(trip_per_hour=sum(count))
+  
+  ggplot(cycledata, aes(hour, date, fill= trip_per_hour)) + 
+    geom_tile() +
+    scale_fill_gradient(low="white", high="blue", limits=c(0,6000)) +
+    theme_ipsum()+
+    labs(fill = "trip counts")
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+heatmap <- heatmapfun(datasepa_data)
+heatmap
+```
+
+```{r}
+ggsave("pic/heatmap.jpg", width = 6, height = 40)
+```

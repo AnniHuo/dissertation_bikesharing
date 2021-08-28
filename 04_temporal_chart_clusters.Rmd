@@ -1,0 +1,790 @@
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Library
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+datasepa_data <- read_csv('data_preparation/sepdata_arrivel.csv')
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cycle <- read_csv("data_preparation/stations.csv")
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cluster1 <- read_csv("table/nonscaled/cluster1.csv") %>% 
+  select(., c(1, 2))
+cluster2 <- read_csv("table/nonscaled/cluster2.csv") %>% 
+  select(., c(1, 2))
+cluster3 <- read_csv("table/nonscaled/cluster3.csv") %>% 
+  select(., c(1, 2))
+cluster4 <- read_csv("table/nonscaled/cluster4.csv") %>% 
+  select(., c(1, 2))
+cluster5 <- read_csv("table/nonscaled/cluster5.csv") %>% 
+  select(., c(1, 2))
+cluster6 <- read_csv("table/nonscaled/cluster6.csv") %>% 
+  select(., c(1, 2))
+```
+
+
+```{r}
+n <- nrow(cluster1) +nrow(cluster2)+nrow(cluster3)+nrow(cluster4)+nrow(cluster5)+nrow(cluster6)
+n
+```
+
+### Function for extracting data for month 1
+
+```{r}
+countdata1fun <- function(data, m, y, n1, n2){
+  alldatamonth <- data %>%
+    filter(month == m) #'03'
+  
+  alldatamonth$day <- as.numeric(alldatamonth$day)
+  monthlast <- alldatamonth %>% 
+    filter(day >= n1) %>% 
+    filter(day <= n2)
+  
+
+  monthlastyear <- monthlast %>%
+    filter(year == y)
+  
+  return(monthlastyear)
+ 
+}
+```
+
+### Function for extracting data for month 2
+
+```{r}
+countdatafun <- function(cluster, m, y, n1, n2){
+  clusterdf <- cluster %>% 
+  left_join(., datasepa_data,
+            by = c("id" = "end_station_id")) %>% 
+  select(., c(3:9, 1, 2, 11))
+  alldatamonth <- clusterdf %>%
+    filter(month == m) #'03'
+  
+  alldatamonth$day <- as.numeric(alldatamonth$day)
+  monthlast <- alldatamonth %>% 
+    filter(day >= n1) %>% 
+    filter(day <= n2)
+  
+
+  monthlastyear <- monthlast %>%
+    filter(year == y)
+  
+  return(monthlastyear)
+ 
+}
+```
+
+
+### Function for plot weekly chart 1
+
+```{r}
+chart1fun <- function(data, m, y, n1, n2,
+                     a, b, c, d, e, f, g, filename){
+  monthlastyear <- countdata1fun(data, m, y, n1, n2)
+  # chart weekly data
+  monthlastyear <- monthlastyear %>%
+    group_by(day, hour) %>%
+    summarise(daily_trip=sum(count))
+  
+  monthlastyear$day <- str_replace_all(monthlastyear$day, a, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, b, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, c, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, d, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, e, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, f, "2") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, g, "2") 
+  
+  monthlastyear <- monthlastyear %>%
+    group_by(day, hour) %>%
+    summarise(daily_trip= mean(daily_trip))
+  
+  monthlastyear$day <- as.character(monthlastyear$day)
+  
+  cbPalette <- c("#0432FF", "#FF0000")
+  monthlastyear$hour <- as.numeric(monthlastyear$hour)
+  monthlastyear %>%
+    ggplot( aes(x=hour, y=daily_trip, group = day, 
+                color = day,shape = day)) +
+    geom_point(size = 2.2) + 
+    geom_line(size = 1.8) +
+    theme_linedraw() + 
+    scale_color_manual(values=cbPalette)+
+    scale_x_continuous (breaks = c(4, 8, 12, 16, 20))+
+    ylim(0, 6000)
+  
+    ggsave(filename, width = 8, height = 6) 
+}
+```
+
+### Function for plot weekly chart 2
+
+```{r}
+chartfun <- function(cluster, m, y, n1, n2,
+                     a, b, c, d, e, f, g, filename){
+  countmonth <- countdatafun(cluster, m, y, n1, n2)
+  # chart weekly data
+  monthlastyear <- countmonth %>%
+    group_by(day, hour) %>%
+    summarise(daily_trip=sum(count))
+  
+  monthlastyear$day <- str_replace_all(monthlastyear$day, a, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, b, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, c, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, d, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, e, "1") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, f, "2") 
+  monthlastyear$day <- str_replace_all(monthlastyear$day, g, "2") 
+  
+  monthlastyear <- monthlastyear %>%
+    group_by(day, hour) %>%
+    summarise(daily_trip= mean(daily_trip))
+  
+  monthlastyear$day <- as.character(monthlastyear$day)
+  
+  cbPalette <- c("#0432FF", "#FF0000")
+  monthlastyear$hour <- as.numeric(monthlastyear$hour)
+  monthlastyear %>%
+    ggplot( aes(x=hour, y=daily_trip, group = day, 
+                color = day,shape = day)) +
+    geom_point(size = 2.2) + 
+    geom_line(size = 1.8) +
+    theme_linedraw() + 
+    scale_color_manual(values=cbPalette)+
+    scale_x_continuous (breaks = c(4, 8, 12, 16, 20))+
+    ylim(0, 2200)
+  
+    ggsave(filename, width = 8, height = 6) 
+    
+    return(countmonth)
+}
+```
+
+### overall pattern
+#### run 2019 data for all data
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# cluster, m, y, n1, n2,a, b, c, d, e, f, g, filename
+
+chartmar <- chart1fun(datasepa_data, "03", "2019", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31",
+                     "pic/temporal_chart/dailytrip2019mar.jpg")
+chartmay <- chart1fun(datasepa_data, "05", "2019", 20, 26,
+                     "20", "21", "22", "23", "24", "25", "26",
+                     "pic/temporal_chart/dailytrip2019may.jpg")
+chartaug <- chart1fun(datasepa_data, "08", "2019", 19, 25,
+                     "19", "20", "21", "22", "23", "24", "25",
+                     "pic/temporal_chart/dailytrip2019aug.jpg")
+```
+
+#### run 2020 data for all data
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+chartmar <- chart1fun(datasepa_data, "03", "2020", 23, 29,
+                     "23", "24", "25", "26", "27", "28", "29",
+                     "pic/temporal_chart/dailytrip2020mar.jpg")
+chartmay <- chart1fun(datasepa_data, "05", "2020", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31", 
+                     "pic/temporal_chart/dailytrip2020may.jpg")
+chartaug <- chart1fun(datasepa_data, "08", "2020", 24, 30, 
+                     "24", "25", "26", "27", "28", "29", "30", 
+                     "pic/temporal_chart/dailytrip2020aug.jpg")
+```
+
+#### run 2021 data for all data
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+chartmar <- chart1fun(datasepa_data, "03", "2021", 22, 28,
+                     "22", "23", "24", "25", "26", "27", "28",
+                     "pic/temporal_chart/dailytrip2021mar.jpg")
+```
+
+
+### cluster 1
+#### run 2019 data for cluster 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# cluster, m, y, n1, n2,a, b, c, d, e, f, g, filename
+
+chartmar <- chartfun(cluster1, "03", "2019", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31",
+                     "pic/temporal_chart/dailytrip2019marcluster1.jpg")
+chartmay <- chartfun(cluster1, "05", "2019", 20, 26,
+                     "20", "21", "22", "23", "24", "25", "26",
+                     "pic/temporal_chart/dailytrip2019maycluster1.jpg")
+chartaug <- chartfun(cluster1, "08", "2019", 19, 25,
+                     "19", "20", "21", "22", "23", "24", "25",
+                     "pic/temporal_chart/dailytrip2019augcluster1.jpg")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/1/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/1/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/1/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+chartmar <- chartfun(cluster1, "03", "2020", 23, 29,
+                     "23", "24", "25", "26", "27", "28", "29",
+                     "pic/temporal_chart/dailytrip2020marcluster1.jpg")
+chartmay <- chartfun(cluster1, "05", "2020", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31", 
+                     "pic/temporal_chart/dailytrip2020maycluster1.jpg")
+chartaug <- chartfun(cluster1, "08", "2020", 24, 30, 
+                     "24", "25", "26", "27", "28", "29", "30", 
+                     "pic/temporal_chart/dailytrip2020augcluster1.jpg")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/1/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/1/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/1/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2021 data for cluster 1
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+chartmar <- chartfun(cluster1, "03", "2021", 22, 28,
+                     "22", "23", "24", "25", "26", "27", "28",
+                     "pic/temporal_chart/dailytrip2021marcluster1.jpg")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/1/mar2021_1.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+### cluster 2
+
+#### run 2019 data for cluster 2
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# cluster, m, y, n1, n2,a, b, c, d, e, f, g, filename
+
+chartmar <- chartfun(cluster2, "03", "2019", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31",
+                     "pic/temporal_chart/dailytrip2019marcluster2.jpg")
+chartmay <- chartfun(cluster2, "05", "2019", 20, 26,
+                     "20", "21", "22", "23", "24", "25", "26",
+                     "pic/temporal_chart/dailytrip2019maycluster2.jpg")
+chartaug <- chartfun(cluster2, "08", "2019", 19, 25,
+                     "19", "20", "21", "22", "23", "24", "25",
+                     "pic/temporal_chart/dailytrip2019augcluster2.jpg")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/2/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/2/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/2/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 2
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+chartmar <- chartfun(cluster2, "03", "2020", 23, 29,
+                     "23", "24", "25", "26", "27", "28", "29",
+                     "pic/temporal_chart/dailytrip2020marcluster2.jpg")
+chartmay <- chartfun(cluster2, "05", "2020", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31", 
+                     "pic/temporal_chart/dailytrip2020maycluster2.jpg")
+chartaug <- chartfun(cluster2, "08", "2020", 24, 30, 
+                     "24", "25", "26", "27", "28", "29", "30", 
+                     "pic/temporal_chart/dailytrip2020augcluster2.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/2/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/2/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/2/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2021 data for cluster 2
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+chartmar <- chartfun(cluster2, "03", "2021", 22, 28,
+                     "22", "23", "24", "25", "26", "27", "28",
+                     "pic/temporal_chart/dailytrip2021marcluster2.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/2/mar2021_2.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+### cluster 3
+#### run 2019 data for cluster 3
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# cluster, m, y, n1, n2,a, b, c, d, e, f, g, filename
+
+chartmar <- chartfun(cluster3, "03", "2019", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31",
+                     "pic/temporal_chart/dailytrip2019marcluster3.jpg")
+chartmay <- chartfun(cluster3, "05", "2019", 20, 26,
+                     "20", "21", "22", "23", "24", "25", "26",
+                     "pic/temporal_chart/dailytrip2019maycluster3.jpg")
+chartaug <- chartfun(cluster3, "08", "2019", 19, 25,
+                     "19", "20", "21", "22", "23", "24", "25",
+                     "pic/temporal_chart/dailytrip2019augcluster3.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/3/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/3/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/3/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 3
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+chartmar <- chartfun(cluster3, "03", "2020", 23, 29,
+                     "23", "24", "25", "26", "27", "28", "29",
+                     "pic/temporal_chart/dailytrip2020marcluster3.jpg")
+chartmay <- chartfun(cluster3, "05", "2020", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31", 
+                     "pic/temporal_chart/dailytrip2020maycluster3.jpg")
+chartaug <- chartfun(cluster3, "08", "2020", 24, 30, 
+                     "24", "25", "26", "27", "28", "29", "30", 
+                     "pic/temporal_chart/dailytrip2020augcluster3.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/3/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/3/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/3/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2021 data for cluster 3
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+chartmar <- chartfun(cluster3, "03", "2021", 22, 28,
+                     "22", "23", "24", "25", "26", "27", "28",
+                     "pic/temporal_chart/dailytrip2021marcluster3.jpg")
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/3/mar2021_3.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+### cluster 4
+#### run 2019 data for cluster 4
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# cluster, m, y, n1, n2,a, b, c, d, e, f, g, filename
+
+chartmar <- chartfun(cluster4, "03", "2019", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31",
+                     "pic/temporal_chart/dailytrip2019marcluster4.jpg")
+chartmay <- chartfun(cluster4, "05", "2019", 20, 26,
+                     "20", "21", "22", "23", "24", "25", "26",
+                     "pic/temporal_chart/dailytrip2019maycluster4.jpg")
+chartaug <- chartfun(cluster4, "08", "2019", 19, 25,
+                     "19", "20", "21", "22", "23", "24", "25",
+                     "pic/temporal_chart/dailytrip2019augcluster4.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/4/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/4/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/4/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 4
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+chartmar <- chartfun(cluster4, "03", "2020", 23, 29,
+                     "23", "24", "25", "26", "27", "28", "29",
+                     "pic/temporal_chart/dailytrip2020marcluster4.jpg")
+chartmay <- chartfun(cluster4, "05", "2020", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31", 
+                     "pic/temporal_chart/dailytrip2020maycluster4.jpg")
+chartaug <- chartfun(cluster4, "08", "2020", 24, 30, 
+                     "24", "25", "26", "27", "28", "29", "30", 
+                     "pic/temporal_chart/dailytrip2020augcluster4.jpg")
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/4/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/4/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/4/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2021 data for cluster 4
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+chartmar <- chartfun(cluster4, "03", "2021", 22, 28,
+                     "22", "23", "24", "25", "26", "27", "28",
+                     "pic/temporal_chart/dailytrip2021marcluster4.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/4/mar2021_4.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+
+
+### cluster 5
+#### run 2019 data for cluster 5
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# cluster, m, y, n1, n2,a, b, c, d, e, f, g, filename
+
+chartmar <- chartfun(cluster5, "03", "2019", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31",
+                     "pic/temporal_chart/dailytrip2019marcluster5.jpg")
+chartmay <- chartfun(cluster5, "05", "2019", 20, 26,
+                     "20", "21", "22", "23", "24", "25", "26",
+                     "pic/temporal_chart/dailytrip2019maycluster5.jpg")
+chartaug <- chartfun(cluster5, "08", "2019", 19, 25,
+                     "19", "20", "21", "22", "23", "24", "25",
+                     "pic/temporal_chart/dailytrip2019augcluster5.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/5/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/5/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/5/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 5
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+chartmar <- chartfun(cluster5, "03", "2020", 23, 29,
+                     "23", "24", "25", "26", "27", "28", "29",
+                     "pic/temporal_chart/dailytrip2020marcluster5.jpg")
+chartmay <- chartfun(cluster5, "05", "2020", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31", 
+                     "pic/temporal_chart/dailytrip2020maycluster5.jpg")
+chartaug <- chartfun(cluster5, "08", "2020", 24, 30, 
+                     "24", "25", "26", "27", "28", "29", "30", 
+                     "pic/temporal_chart/dailytrip2020augcluster5.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/5/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/5/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/5/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2021 data for cluster 5
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+chartmar <- chartfun(cluster5, "03", "2021", 22, 28,
+                     "22", "23", "24", "25", "26", "27", "28",
+                     "pic/temporal_chart/dailytrip2021marcluster5.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/5/mar2021_5.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+
+### cluster 6
+#### run 2019 data for cluster 6
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# cluster, m, y, n1, n2,a, b, c, d, e, f, g, filename
+
+chartmar <- chartfun(cluster6, "03", "2019", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31",
+                     "pic/temporal_chart/dailytrip2019marcluster6.jpg")
+chartmay <- chartfun(cluster6, "05", "2019", 20, 26,
+                     "20", "21", "22", "23", "24", "25", "26",
+                     "pic/temporal_chart/dailytrip2019maycluster6.jpg")
+chartaug <- chartfun(cluster6, "08", "2019", 19, 25,
+                     "19", "20", "21", "22", "23", "24", "25",
+                     "pic/temporal_chart/dailytrip2019augcluster6.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2019 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2019,"table/qgis_visualization_csv_files/6/mar2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2019 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2019,"table/qgis_visualization_csv_files/6/may2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2019 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2019,"table/qgis_visualization_csv_files/6/aug2019.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2020 data for cluster 6
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+chartmar <- chartfun(cluster6, "03", "2020", 23, 29,
+                     "23", "24", "25", "26", "27", "28", "29",
+                     "pic/temporal_chart/dailytrip2020marcluster6.jpg")
+chartmay <- chartfun(cluster6, "05", "2020", 25, 31,
+                     "25", "26", "27", "28", "29", "30", "31", 
+                     "pic/temporal_chart/dailytrip2020maycluster6.jpg")
+chartaug <- chartfun(cluster6, "08", "2020", 24, 30, 
+                     "24", "25", "26", "27", "28", "29", "30", 
+                     "pic/temporal_chart/dailytrip2020augcluster6.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2020 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2020,"table/qgis_visualization_csv_files/6/mar2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+may2020 <- chartmay %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(may2020,"table/qgis_visualization_csv_files/6/may2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+aug2020 <- chartaug %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(aug2020,"table/qgis_visualization_csv_files/6/aug2020.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+
+#### run 2021 data for cluster 6
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+chartmar <- chartfun(cluster6, "03", "2021", 22, 28,
+                     "22", "23", "24", "25", "26", "27", "28",
+                     "pic/temporal_chart/dailytrip2021marcluster6.jpg")
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+mar2021 <- chartmar %>% 
+  group_by(id) %>% 
+  summarise(trip=sum(count),
+            duration=mean(duration)) %>% 
+  left_join(., cycle, by = c("id" = "id"))
+write.table(mar2021,"table/qgis_visualization_csv_files/6/mar2021_6.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+```
+

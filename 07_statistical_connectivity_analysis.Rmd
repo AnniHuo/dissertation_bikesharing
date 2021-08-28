@@ -1,0 +1,607 @@
+
+## Statistical properties of bicycle shaeing mobility network
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+# Library
+library(tidyverse)
+library(janitor)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+datasepa_data <- read_csv('data_preparation/sepdata_departure.csv')
+```
+
+## Function for extracting and calculating data for month 
+
+```{r}
+countdatafun <- function(data, m, y, n1, n2){
+  alldatamonth <- data %>%
+    filter(month == m) #'03'
+  
+  alldatamonth$day <- as.numeric(alldatamonth$day)
+  monthlast <- alldatamonth %>% 
+    filter(day >= n1) %>% 
+    filter(day <= n2)
+  
+
+  monthlastyear <- monthlast %>%
+    filter(year == y)
+  
+  countmonyear <- monthlastyear %>%
+    group_by(end_station_id, start_station_id,end_station_name, start_station_name) %>%
+    summarise(route=sum(count))
+  
+  return(countmonyear)
+ 
+}
+```
+
+## calculation for weekdays
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar2019 <- countdatafun(datasepa_data, "03", "2019", 25, 29)
+countmay2019 <- countdatafun(datasepa_data, "05", "2019", 20, 24)
+countaug2019 <- countdatafun(datasepa_data, "08", "2019", 19, 23)
+countmar2020 <- countdatafun(datasepa_data, "03", "2020", 23, 27)
+countmay2020 <- countdatafun(datasepa_data, "05", "2020", 25, 29)
+countaug2020 <- countdatafun(datasepa_data, "08", "2020", 24, 28)
+countmar2021 <- countdatafun(datasepa_data, "03", "2021", 22, 26)
+```
+
+### N total number of nodes
+
+```{r}
+nodefun <- function(countmonth){
+  ndf1 <- countmonth %>%
+    dplyr::select(., c(1, 3, 5)) %>% 
+    rename("station_id"="end_station_id", 
+           "station_name"="end_station_name")
+  ndf2 <- countmonth %>%
+    dplyr::select(., c(2, 4, 5))%>% 
+    rename("station_id"="start_station_id", 
+           "station_name"="start_station_name")
+  ndf <- rbind(ndf1, ndf2) %>% 
+    group_by(station_name, station_id) %>%
+    summarise(f=sum(route)/5)
+  return(ndf)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+nodemay2019 <- nodefun(countmay2019) #790
+nodemay2020 <- nodefun(countmay2020) #781
+nodeaug2019 <- nodefun(countaug2019) #780
+nodeaug2020 <- nodefun(countaug2020) #783
+nodemar2019 <- nodefun(countmar2019) #785
+nodemar2020 <- nodefun(countmar2020) #783
+nodemar2021 <- nodefun(countmar2021) #790
+```
+
+### L total number of links
+
+```{r}
+L/5/2
+# countmay2019 : 87025
+# countmay2020 : 86457
+# countaug2019 : 79206
+# countaug2020 : 71657
+# countmar2019 : 73606
+# countmar2020 : 28976
+# countmar2021 : 55059
+
+# 8702.5, 8645.7, 7920.6, 7165.7, 7360.6, 2897.6, 5505.9
+```
+
+### T total number of trips
+
+```{r}
+totalfun <- function(countmonth){
+  
+  totaltrip <- countmonth %>% 
+    cbind(., 1) 
+  
+  totaltrip <- totaltrip %>% 
+    rename("base" = "...6") %>% 
+    group_by (base) %>% 
+    summarise(count=sum(route)/5)
+  return(totaltrip)
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+tmay2019 <- totalfun(countmay2019) # 36955
+tmay2020 <- totalfun(countmay2020) # 40458
+taug2019 <- totalfun(countaug2019) # 34163
+taug2020 <- totalfun(countaug2020) # 27650
+tmar2019 <- totalfun(countmar2019) # 30527
+tmar2020 <- totalfun(countmar2020) # 10015
+tmar2021 <- totalfun(countmar2021) # 20365
+```
+
+
+### mean at node
+    
+    <F> mean node flux (trips T/N) 
+    <k> mean **node degree** (links L/N)
+    <w> mean edge weight (trips on link F/k)
+
+
+### coefficient of variation (CV)
+
+
+    CV(F) = sd(F)/mean(F)
+
+    CV(k) = sd(k)/mean(k)
+
+    CV(w) = sd(w)/mean(w)
+
+```{r}
+calfun <- function(year, t, l, n){
+  year = year
+  t = t
+  l = l
+  n = n
+  df = data.frame(year, t, l, n)
+  df$t <- as.numeric(df$t)
+  df$l <- as.numeric(df$l)
+  df$n <- as.numeric(df$n)
+  
+  df <- df %>% 
+    mutate(f = t/n) %>% 
+    mutate(k = l/n) %>% 
+    mutate(w = f/k) %>% 
+     
+    mutate(across(is.numeric, round, 2))
+  return(df)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+df <- calfun(c("2019-05","2020-05","2019-08","2020-08",
+               "2019-03","2020-03","2021-03"),
+             c("36955","40458","34163","27650",
+               "30527","10015","20365"),
+             c("8702.5", "8645.7", "7920.6", "7165.7", "7360.6", "2897.6", "5505.9"),
+             c("790","781","780","783","785","783","790"))
+```
+```{r}
+dfyear <- t(data.frame(df, row.names=1))
+```
+
+The node flux F: the total number of trips that either start from or end at the node.
+
+```{r}
+f_fun <- function(nodefun){
+  
+  f <- nodefun %>% 
+    cbind(., 1) %>% 
+    rename("base" = "...4") %>% #check the column name
+    group_by (base) %>% 
+    summarise(cvf = sd(f)/mean(f))%>%
+    mutate(across(is.numeric, round, 2))
+  return(f)
+}
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+fmay2019 <- f_fun(nodemay2019) #0.74
+fmay2020 <- f_fun(nodemay2020) #0.83
+faug2019 <- f_fun(nodeaug2019) #0.78
+faug2020 <- f_fun(nodeaug2020) #0.64
+fmar2019 <- f_fun(nodemar2019) #0.80
+fmar2020 <- f_fun(nodemar2020) #0.63
+fmar2021 <- f_fun(nodemar2021) #0.64
+```
+
+```{r}
+nodedegreefun <- function(countmonth){
+  
+  k <- countmonth %>% 
+    cbind(., 1) %>% 
+    rename("base" = 1) 
+    
+  kdf1 <- k %>%
+    dplyr::select(., c(3, 6)) %>% 
+    rename( "station_name"="end_station_name")
+  kdf2 <- k %>%
+    dplyr::select(., c(4, 6))%>% 
+    rename("station_name"="start_station_name")
+  nodedegree <- rbind(kdf1, kdf2) %>% 
+    group_by(station_name) %>%
+    summarise(k=sum(base)/10)%>% 
+    mutate(across(is.numeric, round, 2))
+  return(nodedegree)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cycle <- read_csv("data_preparation/stations.csv") %>% 
+  select(., c(2, 3, 4))
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+kmay2019n <- nodedegreefun(countmay2019) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+
+kmay2020n <- nodedegreefun(countmay2020) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kaug2019n <- nodedegreefun(countaug2019) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kaug2020n <- nodedegreefun(countaug2020) %>%
+  left_join(cycle, ., by = c("name" = "station_name"))
+
+kmar2019n <- nodedegreefun(countmar2019) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kmar2020n <- nodedegreefun(countmar2020) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kmar2021n <- nodedegreefun(countmar2021) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+```
+
+```{r}
+write.table(kmay2019n,"table/qgis_nodedegree/weekdays/nodedegree201905.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmay2020n,"table/qgis_nodedegree/weekdays/nodedegree202005.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kaug2019n,"table/qgis_nodedegree/weekdays/nodedegree201908.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kaug2020n,"table/qgis_nodedegree/weekdays/nodedegree202008.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmar2019n,"table/qgis_nodedegree/weekdays/nodedegree201903.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmar2020n,"table/qgis_nodedegree/weekdays/nodedegree202003.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmar2021n,"table/qgis_nodedegree/weekdays/nodedegree202103.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+```{r}
+k_fun <- function(countmonth){
+  
+  k <- countmonth %>% 
+    cbind(., 1) %>% 
+    rename("base" = 1) 
+    
+  kdf1 <- k %>%
+    dplyr::select(., c(3, 6)) %>% 
+    rename( "station_name"="end_station_name")
+  kdf2 <- k %>%
+    dplyr::select(., c(4, 6))%>% 
+    rename("station_name"="start_station_name")
+  kdf <- rbind(kdf1, kdf2) %>% 
+    group_by(station_name) %>%
+    summarise(k=sum(base)/10)%>% 
+    cbind(., 1) %>% 
+    rename("base" = "1") %>% #check the column name
+    group_by (base) %>% 
+    summarise(cvk = sd(k)/mean(k))%>%
+    mutate(across(is.numeric, round, 2))
+  return(kdf)
+}
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+kmay2019 <- k_fun(countmay2019) #0.52
+kmay2020 <- k_fun(countmay2020) #0.60
+kaug2019 <- k_fun(countaug2019) #0.53
+kaug2020 <- k_fun(countaug2020) #0.54
+kmar2019 <- k_fun(countmar2019) #0.54
+kmar2020 <- k_fun(countmar2020) #0.62
+kmar2021 <- k_fun(countmar2021) #0.55
+```
+
+```{r}
+w_fun <- function(nodefun, countmonth){
+  f <- nodefun 
+  k <- countmonth %>% 
+    cbind(., 1) %>% 
+    rename("base" = 1) 
+    
+  kdf1 <- k %>%
+    dplyr::select(., c(3, 6)) %>% 
+    rename( "station_name"="end_station_name")
+  kdf2 <- k %>%
+    dplyr::select(., c(4, 6))%>% 
+    rename("station_name"="start_station_name")
+  wdf <- rbind(kdf1, kdf2) %>% 
+    group_by(station_name) %>%
+    summarise(k=sum(base)/10)%>% 
+    left_join(., f, by = c("station_name" = "station_name")) %>% 
+    mutate(w = f/k) %>% 
+    cbind(., 1) %>% 
+    rename("base" = "1") %>% #check the column name
+    group_by (base) %>% 
+    summarise(cvw = sd(w)/mean(w))%>%
+    mutate(across(is.numeric, round, 2))
+  return(wdf)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+wmay2019 <- w_fun(nodemay2019,countmay2019) #0.52
+wmay2020 <- w_fun(nodemay2020,countmay2020) #0.43
+waug2019 <- w_fun(nodeaug2019,countaug2019) #0.53
+waug2020 <- w_fun(nodeaug2020,countaug2020) #0.45
+wmar2019 <- w_fun(nodemar2019,countmar2019) #0.54
+wmar2020 <- w_fun(nodemar2020,countmar2020) #0.42
+wmar2021 <- w_fun(nodemar2021,countmar2021) #0.43
+```
+   
+
+
+## calculation for weekends
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+countmar2019 <- countdatafun(datasepa_data, "03", "2019", 30, 31)
+countmay2019 <- countdatafun(datasepa_data, "05", "2019", 25, 26)
+countaug2019 <- countdatafun(datasepa_data, "08", "2019", 24, 25)
+countmar2020 <- countdatafun(datasepa_data, "03", "2020", 28, 29)
+countmay2020 <- countdatafun(datasepa_data, "05", "2020", 30, 31)
+countaug2020 <- countdatafun(datasepa_data, "08", "2020", 29, 30)
+countmar2021 <- countdatafun(datasepa_data, "03", "2021", 27, 28)
+```
+
+### N total number of nodes
+
+```{r}
+nodefun <- function(countmonth){
+  ndf1 <- countmonth %>%
+    dplyr::select(., c(1, 3, 5)) %>% 
+    rename("station_id"="end_station_id", 
+           "station_name"="end_station_name")
+  ndf2 <- countmonth %>%
+    dplyr::select(., c(2, 4, 5))%>% 
+    rename("station_id"="start_station_id", 
+           "station_name"="start_station_name")
+  ndf <- rbind(ndf1, ndf2) %>% 
+    group_by(station_name, station_id) %>%
+    summarise(f=sum(route)/2)
+  return(ndf)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+nodemay2019 <- nodefun(countmay2019) #788
+nodemay2020 <- nodefun(countmay2020) #781
+nodeaug2019 <- nodefun(countaug2019) #778
+nodeaug2020 <- nodefun(countaug2020) #778
+nodemar2019 <- nodefun(countmar2019) #785
+nodemar2020 <- nodefun(countmar2020) #781
+nodemar2021 <- nodefun(countmar2021) #789
+```
+
+### L total number of links
+
+```{r}
+L/2/2
+# countmay2019 : 30825
+# countmay2020 : 59857
+# countaug2019 : 30357
+# countaug2020 : 35029
+# countmar2019 : 28635
+# countmar2020 : 12278
+# countmar2021 : 34087
+
+# 7706.25, 14964.25, 7589.25, 8757.25, 7158.75, 3069.5, 8521.75
+```
+
+### T total number of trips
+
+```{r}
+totalfun <- function(countmonth){
+  
+  totaltrip <- countmonth %>% 
+    cbind(., 1) 
+  
+  totaltrip <- totaltrip %>% 
+    rename("base" = "...6") %>% 
+    group_by (base) %>% 
+    summarise(count=sum(route)/2)
+  return(totaltrip)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+tmay2019 <- totalfun(countmay2019) #25112
+tmay2020 <- totalfun(countmay2020) #57422
+taug2019 <- totalfun(countaug2019) #15970
+taug2020 <- totalfun(countaug2020) #27672
+tmar2019 <- totalfun(countmar2019) #22396
+tmar2020 <- totalfun(countmar2020) #8924
+tmar2021 <- totalfun(countmar2021) #27522
+```
+
+
+### mean at node
+    
+    <F> mean node flux (trips T/N) 
+    <k> mean **node degree** (links L/N)
+    <w> mean edge weight (trips on link F/k)
+
+
+### coefficient of variation (CV)
+
+
+    CV(F) = sd(F)/mean(F)
+
+    CV(k) = sd(k)/mean(k)
+
+    CV(w) = sd(w)/mean(w)
+
+```{r}
+calfun <- function(year, t, l, n){
+  year = year
+  t = t
+  l = l
+  n = n
+  df = data.frame(year, t, l, n)
+  df$t <- as.numeric(df$t)
+  df$l <- as.numeric(df$l)
+  df$n <- as.numeric(df$n)
+  
+  df <- df %>% 
+    mutate(f = t/n) %>% 
+    mutate(k = l/n) %>% 
+    mutate(w = f/k) %>% 
+     
+    mutate(across(is.numeric, round, 2))
+  return(df)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+df2 <- calfun(c("2019-05","2020-05","2019-08","2020-08",
+               "2019-03","2020-03","2021-03"),
+             c("25112","57422","15970","27672",
+               "22396","8924","27522"),
+             c("7706.25", "14964.25", "7589.25", "8757.25", "7158.75", "3069.5", "8521.75"),
+             c("788","781","778","778","785","781","789"))
+```
+```{r}
+dfyear2 <- t(data.frame(df2, row.names=1))
+```
+
+The node flux F: the total number of trips that either start from or end at the node.
+
+```{r}
+f_fun <- function(nodefun){
+  
+  f <- nodefun %>% 
+    cbind(., 1) %>% 
+    rename("base" = "...4") %>% #check the column name
+    group_by (base) %>% 
+    summarise(cvf = sd(f)/mean(f))%>%
+    mutate(across(is.numeric, round, 2))
+  return(f)
+}
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+fmay2019 <- f_fun(nodemay2019) #0.90
+fmay2020 <- f_fun(nodemay2020) #0.90
+faug2019 <- f_fun(nodeaug2019) #1.06
+faug2020 <- f_fun(nodeaug2020) #0.81
+fmar2019 <- f_fun(nodemar2019) #0.86
+fmar2020 <- f_fun(nodemar2020) #0.73
+fmar2021 <- f_fun(nodemar2021) #0.89
+```
+
+```{r}
+nodedegreefun <- function(countmonth){
+  
+  k <- countmonth %>% 
+    cbind(., 1) %>% 
+    rename("base" = 1) 
+    
+  kdf1 <- k %>%
+    dplyr::select(., c(3, 6)) %>% 
+    rename( "station_name"="end_station_name")
+  kdf2 <- k %>%
+    dplyr::select(., c(4, 6))%>% 
+    rename("station_name"="start_station_name")
+  nodedegree <- rbind(kdf1, kdf2) %>% 
+    group_by(station_name) %>%
+    summarise(k=sum(base)/4)%>% 
+    mutate(across(is.numeric, round, 2))
+  return(nodedegree)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+cycle <- read_csv("data_preparation/stations.csv") %>% 
+  select(., c(2, 3, 4))
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+kmay2019n <- nodedegreefun(countmay2019) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+
+kmay2020n <- nodedegreefun(countmay2020) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kaug2019n <- nodedegreefun(countaug2019) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kaug2020n <- nodedegreefun(countaug2020) %>%
+  left_join(cycle, ., by = c("name" = "station_name"))
+
+kmar2019n <- nodedegreefun(countmar2019) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kmar2020n <- nodedegreefun(countmar2020) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+kmar2021n <- nodedegreefun(countmar2021) %>% 
+  left_join(cycle, ., by = c("name" = "station_name"))
+```
+
+```{r}
+write.table(kmay2019n,"table/qgis_nodedegree/weekends/nodedegree201905.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmay2020n,"table/qgis_nodedegree/weekends/nodedegree202005.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kaug2019n,"table/qgis_nodedegree/weekends/nodedegree201908.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kaug2020n,"table/qgis_nodedegree/weekends/nodedegree202008.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmar2019n,"table/qgis_nodedegree/weekends/nodedegree201903.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmar2020n,"table/qgis_nodedegree/weekends/nodedegree202003.csv",row.names=FALSE,col.names=TRUE,sep=",")
+write.table(kmar2021n,"table/qgis_nodedegree/weekends/nodedegree202103.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+```{r}
+k_fun <- function(countmonth){
+  
+  k <- countmonth %>% 
+    cbind(., 1) %>% 
+    rename("base" = 1) 
+    
+  kdf1 <- k %>%
+    dplyr::select(., c(3, 6)) %>% 
+    rename( "station_name"="end_station_name")
+  kdf2 <- k %>%
+    dplyr::select(., c(4, 6))%>% 
+    rename("station_name"="start_station_name")
+  kdf <- rbind(kdf1, kdf2) %>% 
+    group_by(station_name) %>%
+    summarise(k=sum(base)/4)%>% 
+    cbind(., 1) %>% 
+    rename("base" = "1") %>% #check the column name
+    group_by (base) %>% 
+    summarise(cvk = sd(k)/mean(k))%>%
+    mutate(across(is.numeric, round, 2))
+  return(kdf)
+}
+```
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+kmay2019 <- k_fun(countmay2019) #0.63
+kmay2020 <- k_fun(countmay2020) #0.69
+kaug2019 <- k_fun(countaug2019) #0.66
+kaug2020 <- k_fun(countaug2020) #0.64
+kmar2019 <- k_fun(countmar2019) #0.64
+kmar2020 <- k_fun(countmar2020) #0.74
+kmar2021 <- k_fun(countmar2021) #0.67
+```
+
+```{r}
+w_fun <- function(nodefun, countmonth){
+  f <- nodefun 
+  k <- countmonth %>% 
+    cbind(., 1) %>% 
+    rename("base" = 1) 
+    
+  kdf1 <- k %>%
+    dplyr::select(., c(3, 6)) %>% 
+    rename( "station_name"="end_station_name")
+  kdf2 <- k %>%
+    dplyr::select(., c(4, 6))%>% 
+    rename("station_name"="start_station_name")
+  wdf <- rbind(kdf1, kdf2) %>% 
+    group_by(station_name) %>%
+    summarise(k=sum(base)/4)%>% 
+    left_join(., f, by = c("station_name" = "station_name")) %>% 
+    mutate(w = f/k) %>% 
+    cbind(., 1) %>% 
+    rename("base" = "1") %>% #check the column name
+    group_by (base) %>% 
+    summarise(cvw = sd(w)/mean(w))%>%
+    mutate(across(is.numeric, round, 2))
+  return(wdf)
+}
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+wmay2019 <- w_fun(nodemay2019,countmay2019) #0.49
+wmay2020 <- w_fun(nodemay2020,countmay2020) #0.41
+waug2019 <- w_fun(nodeaug2019,countaug2019) #0.53
+waug2020 <- w_fun(nodeaug2020,countaug2020) #0.46
+wmar2019 <- w_fun(nodemar2019,countmar2019) #0.50
+wmar2020 <- w_fun(nodemar2020,countmar2020) #0.49
+wmar2021 <- w_fun(nodemar2021,countmar2021) #0.44
+```
+
+
+
